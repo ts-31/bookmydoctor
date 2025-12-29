@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="280" height="60" viewBox="0 0 280 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon Container -->
+  <rect x="10" y="10" width="40" height="40" rx="8" fill="#10B981"/>
+  
+  <!-- Medical Cross -->
+  <path d="M30 20V40M20 30H40" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  
+  <!-- Checkmark Accent -->
+  <circle cx="42" cy="18" r="8" fill="#059669"/>
+  <path d="M39 18L41 20L45 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Text: BookMy -->
+  <text x="70" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#1F2937" letter-spacing="-0.02em">BookMy</text>
+  
+  <!-- Text: Doctor (Bold) -->
+  <text x="177" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="700" fill="#10B981" letter-spacing="-0.02em">Doctor</text>
+</svg>
