@@ -10,6 +10,14 @@ workflows.
 
 ------------------------------------------------------------------------
 
+## 🌐 Live Demo / Deployment
+
+- **Frontend (Patient Dashboard):** [https://client-silk-six-29.vercel.app/](https://client-silk-six-29.vercel.app/)  
+- **Admin Dashboard:** [https://admin-xi-six-78.vercel.app/](https://admin-xi-six-78.vercel.app/)  
+- **Backend (API Server):** [https://server-phi-eight-42.vercel.app/](https://server-phi-eight-42.vercel.app/)
+
+------------------------------------------------------------------------
+
 ## 🚀 Key Features
 
 ### 👤 Patient (User)
