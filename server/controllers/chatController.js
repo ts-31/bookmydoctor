@@ -1,6 +1,7 @@
 import { runAIGraph } from "../services/ai/graph.js";
 import chatModel from "../models/chatModel.js";
 import userModel from "../models/userModel.js";
+import { AI_UNAVAILABLE_REPLY, isAiApiError } from "../constants/aiChatMessages.js";
 
 /**
  * Handle incoming chat messages and return the AI response.
@@ -53,9 +54,25 @@ export const handleChatMessage = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in chat controller:", error);
-    res.status(500).json({
+
+    // Remove unanswered user message so history stays consistent
+    try {
+      const chat = await chatModel.findOne({ userId: req.user?.userId || req.body?.userId });
+      if (chat?.messages?.length && chat.messages[chat.messages.length - 1].role === "user") {
+        chat.messages.pop();
+        await chat.save();
+      }
+    } catch (rollbackError) {
+      console.error("Error rolling back chat message:", rollbackError);
+    }
+
+    const aiUnavailable = isAiApiError(error);
+    res.status(aiUnavailable ? 503 : 500).json({
       success: false,
-      message: "An error occurred while processing your request.",
+      reply: aiUnavailable
+        ? AI_UNAVAILABLE_REPLY
+        : "An error occurred while processing your request.",
+      aiUnavailable,
     });
   }
 };

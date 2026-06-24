@@ -4,6 +4,11 @@ import ChatWindow from "./ChatWindow";
 import { AppContext } from "../../context/AppContext";
 import axios from "axios";
 
+const DEMO_GIF_URL =
+  "https://github.com/ts-31/bookmydoctor/blob/main/demo.gif";
+
+const AI_UNAVAILABLE_REPLY = `I'm sorry, the AI assistant is temporarily unavailable due to API credit limits. You can watch the demo to see how it works: ${DEMO_GIF_URL}`;
+
 const INITIAL_MESSAGES = [
   {
     id: "init-1",
@@ -83,7 +88,7 @@ const ChatWidget = () => {
         { headers: { token } }
       );
 
-      if (data.success && data.reply) {
+      if (data.reply) {
         const aiResponse = {
           id: (Date.now() + 1).toString(),
           text: data.reply,
@@ -95,9 +100,12 @@ const ChatWidget = () => {
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      const fallbackReply =
+        error.response?.data?.reply ||
+        (error.response?.status === 503 ? AI_UNAVAILABLE_REPLY : null);
       const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: "Sorry, I encountered an error. Please try again.",
+        text: fallbackReply || AI_UNAVAILABLE_REPLY,
         sender: "ai",
       };
       setMessages((prev) => [...prev, errorMessage]);

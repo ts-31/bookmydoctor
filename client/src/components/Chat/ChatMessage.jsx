@@ -1,6 +1,26 @@
 import React from "react";
 import { User, Bot } from "lucide-react";
 
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+
+const linkify = (text) =>
+  text.split(URL_PATTERN).map((part, index) => {
+    if (!/^https?:\/\//.test(part)) return part;
+
+    const isDemoLink = part.includes("demo.gif");
+    return (
+      <a
+        key={index}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline break-all"
+      >
+        {isDemoLink ? "demo" : part}
+      </a>
+    );
+  });
+
 const ChatMessage = ({ message }) => {
   const isUser = message.sender === "user";
 
@@ -21,7 +41,7 @@ const ChatMessage = ({ message }) => {
               : "bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200"
           }`}
         >
-          {message.text}
+          {isUser ? message.text : linkify(message.text)}
         </div>
       </div>
     </div>

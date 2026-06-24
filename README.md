@@ -27,9 +27,7 @@ Patients interact with an AI appointment agent via a floating chat widget in the
 
 ### 🎬 Demo
 
-[Watch the AI agent demo](./demo.mp4)
-
-> On GitHub: open the link above or browse to `demo.mp4` in the repo root.
+![AI Agent Demo](./demo.gif)
 
 **Example conversation:**
 - *"Book appointment tomorrow at 2 pm for dermat doctor"* → books Dr. Meera Patel
@@ -92,7 +90,7 @@ bookmydoctor/
 ├── client/           # Patient-facing React app (includes ChatWidget)
 ├── admin/            # Admin & Doctor dashboard (React)
 ├── docs/             # Architecture documentation
-└── demo.mp4          # AI agent feature demo video
+└── demo.gif          # AI agent feature demo (GIF for GitHub preview)
 ```
 
 ---
