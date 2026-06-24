@@ -1,5 +1,6 @@
 import { runAIGraph } from "../services/ai/graph.js";
 import chatModel from "../models/chatModel.js";
+import userModel from "../models/userModel.js";
 
 /**
  * Handle incoming chat messages and return the AI response.
@@ -18,13 +19,16 @@ export const handleChatMessage = async (req, res) => {
       return res.status(401).json({ success: false, message: "User not authenticated" });
     }
 
-    // 1. Fetch or create chat document for user
+    // 1. Fetch user data for context
+    const userData = await userModel.findById(userId).select("-password");
+
+    // 2. Fetch or create chat document for user
     let chat = await chatModel.findOne({ userId });
     if (!chat) {
       chat = new chatModel({ userId, messages: [] });
     }
 
-    // 2. Append new user message to DB document
+    // 3. Append new user message to DB document
     const userMsgObj = { role: "user", content: message };
     chat.messages.push(userMsgObj);
     chat.lastActiveAt = Date.now();
@@ -32,8 +36,8 @@ export const handleChatMessage = async (req, res) => {
     console.log(`\n[AI Chat] Received user message: "${message}"`);
     console.log(`[AI Chat] Forwarding to LangGraph/Grok with ${chat.messages.length} total messages...`);
 
-    // 3. Pass FULL message history to LangGraph
-    const aiResponseContent = await runAIGraph(chat.messages);
+    // 4. Pass FULL message history and userData to LangGraph
+    const aiResponseContent = await runAIGraph(chat.messages, userId, userData);
 
     console.log(`[AI Chat] Received AI response.`);
 

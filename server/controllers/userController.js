@@ -5,6 +5,7 @@ import doctorModel from "../models/doctorModel.js";
 import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
 import appointmentModel from "../models/appointmentModel.js";
+import { createAppointment, getUserAppointments, cancelUserAppointment } from "../services/bookingService.js";
 
 const MAX_USERS = 100;
 
@@ -187,52 +188,7 @@ const bookAppointment = async (req, res) => {
     const { userId } = req.user;
     const { docId, slotDate, slotTime } = req.body;
 
-    const docData = await doctorModel.findById(docId).select("-password");
-
-    if (!docData.available) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not available. Please choose another doctor.",
-      });
-    }
-
-    let slots_booked = docData.slots_booked;
-
-    // check slot availability
-    if (slots_booked[slotDate]) {
-      if (slots_booked[slotDate].includes(slotTime)) {
-        return res.status(400).json({
-          success: false,
-          message: "This slot is already booked.",
-        });
-      } else {
-        slots_booked[slotDate].push(slotTime);
-      }
-    } else {
-      slots_booked[slotDate] = [];
-      slots_booked[slotDate].push(slotTime);
-    }
-
-    const userData = await userModel.findById(userId).select("-password");
-
-    delete docData.slots_booked;
-
-    const appointmentData = {
-      userId,
-      docId,
-      userData,
-      docData,
-      amount: docData.fees,
-      slotTime,
-      slotDate,
-      date: Date.now(),
-    };
-
-    const newAppointment = new appointmentModel(appointmentData);
-    await newAppointment.save();
-
-    // save new slots data in docData
-    await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+    await createAppointment(userId, docId, slotDate, slotTime);
 
     res.status(200).json({
       success: true,
@@ -250,7 +206,7 @@ const bookAppointment = async (req, res) => {
 const listAppointment = async (req, res) => {
   try {
     const { userId } = req.user;
-    const appointments = await appointmentModel.find({ userId });
+    const appointments = await getUserAppointments(userId);
 
     res.status(200).json({
       success: true,
@@ -270,40 +226,7 @@ const cancelAppointment = async (req, res) => {
     const { userId } = req.user;
     const { appointmentId } = req.body;
 
-    const appointmentData = await appointmentModel.findById(appointmentId);
-    if (!appointmentData) {
-      return res.status(404).json({
-        success: false,
-        message: "Appointment not found.",
-      });
-    }
-
-    // verify appointment user
-    if (appointmentData.userId.toString() !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to cancel this appointment.",
-      });
-    }
-
-    // cancel appointment
-    await appointmentModel.findByIdAndUpdate(appointmentId, {
-      cancelled: true,
-    });
-
-    //releasing doctor slot
-    const { docId, slotDate, slotTime } = appointmentData;
-    const doctorData = await doctorModel.findById(docId).select("-password");
-    if (doctorData) {
-      let slots_booked = doctorData.slots_booked;
-      if (slots_booked[slotDate]) {
-        slots_booked[slotDate] = slots_booked[slotDate].filter(
-          (time) => time !== slotTime
-        );
-
-        await doctorModel.findByIdAndUpdate(docId, { slots_booked });
-      }
-    }
+    await cancelUserAppointment(userId, appointmentId);
 
     res.status(200).json({
       success: true,
