@@ -12,6 +12,7 @@ import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import { ToastContainer, toast } from "react-toastify";
 import NotFound from "./pages/NotFound";
+import ChatWidget from "./components/Chat/ChatWidget";
 
 const App = () => {
   return (
@@ -33,6 +34,7 @@ const App = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
+      <ChatWidget />
     </div>
   );
 };
