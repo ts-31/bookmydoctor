@@ -36,8 +36,9 @@ export const handleChatMessage = async (req, res) => {
     console.log(`\n[AI Chat] Received user message: "${message}"`);
     console.log(`[AI Chat] Forwarding to LangGraph/Grok with ${chat.messages.length} total messages...`);
 
-    // 4. Pass FULL message history and userData to LangGraph
-    const aiResponseContent = await runAIGraph(chat.messages, userId, userData);
+    // 4. Pass only the last 10 messages and userData to LangGraph to prevent payload overload
+    const recentMessages = chat.messages.slice(-10);
+    const aiResponseContent = await runAIGraph(recentMessages, userId, userData);
 
     console.log(`[AI Chat] Received AI response.`);
 

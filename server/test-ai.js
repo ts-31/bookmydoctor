@@ -69,6 +69,17 @@ const runTests = async () => {
     process.exit(1);
   }
 
+  // ── Test 5: LangGraph pipeline (Partial Booking Flow) ─
+  console.log("\n[Test 5] LangGraph pipeline checking partial booking flow...");
+  try {
+    const messages = [{ role: "user", content: "I want to book an appointment with Dr. Meera Patel." }];
+    const result = await runAIGraph(messages, "dummyUserId", dummyUserData);
+    console.log("✅ Graph Response for Partial Booking:\n", result);
+  } catch (err) {
+    console.error("❌ Graph Partial Booking Test Failed:", err.message);
+    process.exit(1);
+  }
+
   console.log("\n" + "=".repeat(50));
   console.log("  All tests passed! AI foundation is ready.");
   console.log("=".repeat(50) + "\n");
