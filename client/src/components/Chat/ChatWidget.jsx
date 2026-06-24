@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { MessageCircle } from "lucide-react";
 import ChatWindow from "./ChatWindow";
+import { AppContext } from "../../context/AppContext";
+import axios from "axios";
 
 const INITIAL_MESSAGES = [
   {
@@ -11,14 +13,45 @@ const INITIAL_MESSAGES = [
 ];
 
 const ChatWidget = () => {
+  const { backendUrl, token } = useContext(AppContext);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [isTyping, setIsTyping] = useState(false);
 
+  // Load chat history when component mounts or token changes
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      if (!token) {
+        setMessages(INITIAL_MESSAGES);
+        return;
+      }
+      try {
+        const { data } = await axios.get(`${backendUrl}/api/chat/history`, {
+          headers: { token },
+        });
+        if (data.success && data.messages && data.messages.length > 0) {
+          const mappedMessages = data.messages.map((msg, index) => ({
+            id: msg._id || `${index}-${Date.now()}`,
+            text: msg.content,
+            sender: msg.role === "user" ? "user" : "ai",
+          }));
+          setMessages(mappedMessages);
+        } else {
+          setMessages(INITIAL_MESSAGES);
+        }
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+        setMessages(INITIAL_MESSAGES);
+      }
+    };
+
+    fetchChatHistory();
+  }, [token, backendUrl]);
+
   const toggleChat = () => setIsOpen(!isOpen);
 
-  const handleSendMessage = (text) => {
-    // 1. Add User Message
+  const handleSendMessage = async (text) => {
+    // 1. Add User Message to UI instantly
     const userMessage = {
       id: Date.now().toString(),
       text,
@@ -26,19 +59,51 @@ const ChatWidget = () => {
     };
     setMessages((prev) => [...prev, userMessage]);
 
-    // 2. Simulate AI Processing
     setIsTyping(true);
 
-    // Simulate network delay for AI response
-    setTimeout(() => {
-      const aiResponse = {
+    // 2. If no token, show login prompt
+    if (!token) {
+      setTimeout(() => {
+        const aiResponse = {
+          id: (Date.now() + 1).toString(),
+          text: "Please log in to chat with the AI assistant and book appointments.",
+          sender: "ai",
+        };
+        setMessages((prev) => [...prev, aiResponse]);
+        setIsTyping(false);
+      }, 1000);
+      return;
+    }
+
+    // 3. Send to Backend and process reply
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/chat/message`,
+        { message: text },
+        { headers: { token } }
+      );
+
+      if (data.success && data.reply) {
+        const aiResponse = {
+          id: (Date.now() + 1).toString(),
+          text: data.reply,
+          sender: "ai",
+        };
+        setMessages((prev) => [...prev, aiResponse]);
+      } else {
+        throw new Error("Failed to get response from assistant");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: "I am a demo AI assistant. Backend integration is pending, so I can only echo that I received your message!",
+        text: "Sorry, I encountered an error. Please try again.",
         sender: "ai",
       };
-      setMessages((prev) => [...prev, aiResponse]);
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (

@@ -6,6 +6,7 @@ import connectCloudinary from "./config/cloudinary.js";
 import adminRouter from "./routes/adminRoute.js";
 import doctorRouter from "./routes/doctorRoute.js";
 import userRouter from "./routes/userRoute.js";
+import chatRouter from "./routes/chatRoute.js";
 
 // app setup
 const app = express();
@@ -20,7 +21,13 @@ app.use(cors());
 app.use("/api/admin", adminRouter);
 app.use("/api/doctor", doctorRouter);
 app.use("/api/user", userRouter);
+app.use("/api/chat", chatRouter);
 
 app.get("/", (req, res) => res.json({ message: "Hello" }));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
 export default app;
