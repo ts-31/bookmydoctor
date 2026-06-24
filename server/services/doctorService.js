@@ -1,4 +1,5 @@
 import doctorModel from "../models/doctorModel.js";
+import { getBookedSlotsForDoctor } from "./bookingService.js";
 
 /**
  * Fetch a list of doctors, optionally filtered by speciality.
@@ -10,7 +11,17 @@ export const getDoctorsList = async (filters = {}) => {
   if (filters.speciality) {
     query.speciality = filters.speciality;
   }
-  return await doctorModel.find(query).select(["-password", "-email"]);
+  const doctors = await doctorModel.find(query).select(["-password", "-email"]);
+
+  const doctorsWithSlots = await Promise.all(
+    doctors.map(async (doc) => {
+      const docObj = doc.toObject();
+      docObj.slots_booked = await getBookedSlotsForDoctor(doc._id.toString());
+      return docObj;
+    })
+  );
+
+  return doctorsWithSlots;
 };
 
 /**
@@ -19,12 +30,12 @@ export const getDoctorsList = async (filters = {}) => {
  * @returns {Promise<Object>} Doctor's availability status and slots_booked
  */
 export const getDoctorAvailability = async (docId) => {
-  const docData = await doctorModel.findById(docId).select("available slots_booked");
+  const docData = await doctorModel.findById(docId).select("available");
   if (!docData) {
     throw new Error("Doctor not found");
   }
   return {
     available: docData.available,
-    slots_booked: docData.slots_booked || {},
+    slots_booked: await getBookedSlotsForDoctor(docId),
   };
 };

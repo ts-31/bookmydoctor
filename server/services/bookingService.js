@@ -3,6 +3,23 @@ import userModel from "../models/userModel.js";
 import appointmentModel from "../models/appointmentModel.js";
 
 /**
+ * Build slots_booked map from active (non-cancelled) appointments.
+ * Appointments collection is the single source of truth for slot occupancy.
+ */
+export const getBookedSlotsForDoctor = async (docId) => {
+  const appointments = await appointmentModel
+    .find({ docId, cancelled: false })
+    .select("slotDate slotTime");
+
+  const slots_booked = {};
+  for (const app of appointments) {
+    if (!slots_booked[app.slotDate]) slots_booked[app.slotDate] = [];
+    slots_booked[app.slotDate].push(app.slotTime);
+  }
+  return slots_booked;
+};
+
+/**
  * Create a new appointment.
  * @param {string} userId - ID of the user booking the appointment
  * @param {string} docId - ID of the doctor
@@ -18,41 +35,48 @@ export const createAppointment = async (userId, docId, slotDate, slotTime) => {
     throw new Error("Doctor not available. Please choose another doctor.");
   }
 
-  let slots_booked = docData.slots_booked || {};
-
-  // check slot availability
-  if (slots_booked[slotDate]) {
-    if (slots_booked[slotDate].includes(slotTime)) {
-      throw new Error("This slot is already booked.");
-    } else {
-      slots_booked[slotDate].push(slotTime);
-    }
-  } else {
-    slots_booked[slotDate] = [];
-    slots_booked[slotDate].push(slotTime);
-  }
-
   const userData = await userModel.findById(userId).select("-password");
   if (!userData) throw new Error("User not found.");
 
-  delete docData.slots_booked;
-
+  // We instantiate the model early. The Mongoose Schema's "set" function will automatically normalize the slotTime.
   const appointmentData = {
     userId,
     docId,
     userData,
     docData,
     amount: docData.fees,
-    slotTime,
+    slotTime, // The raw string (e.g. "11 am")
     slotDate,
     date: Date.now(),
   };
 
   const newAppointment = new appointmentModel(appointmentData);
-  await newAppointment.save();
+  
+  const normalizedSlotTime = newAppointment.slotTime;
 
-  // save new slots data in docData
-  await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+  const existingSlot = await appointmentModel.findOne({
+    docId,
+    slotDate,
+    slotTime: normalizedSlotTime,
+    cancelled: false,
+  });
+  if (existingSlot) {
+    throw new Error("This slot is already booked.");
+  }
+
+  delete newAppointment.docData.slots_booked;
+
+  try {
+    await newAppointment.save();
+  } catch (error) {
+    if (error.code === 11000) {
+      if (error.message.includes("userId_1")) {
+        throw new Error("You already have another appointment scheduled at this exact date and time.");
+      }
+      throw new Error("This slot is already booked.");
+    }
+    throw error;
+  }
 
   return newAppointment;
 };
@@ -83,24 +107,9 @@ export const cancelUserAppointment = async (userId, appointmentId) => {
     throw new Error("You are not authorized to cancel this appointment.");
   }
 
-  // cancel appointment
   await appointmentModel.findByIdAndUpdate(appointmentId, {
     cancelled: true,
   });
-
-  // releasing doctor slot
-  const { docId, slotDate, slotTime } = appointmentData;
-  const doctorData = await doctorModel.findById(docId).select("-password");
-  
-  if (doctorData) {
-    let slots_booked = doctorData.slots_booked || {};
-    if (slots_booked[slotDate]) {
-      slots_booked[slotDate] = slots_booked[slotDate].filter(
-        (time) => time !== slotTime
-      );
-      await doctorModel.findByIdAndUpdate(docId, { slots_booked });
-    }
-  }
 
   return true;
 };
