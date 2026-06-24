@@ -38,9 +38,9 @@ Patients interact with an AI appointment agent via a floating chat widget in the
 
 ## 🌐 Live Demo / Deployment
 
-- **Frontend (Patient Dashboard):** [https://client-silk-six-29.vercel.app/](https://client-silk-six-29.vercel.app/)
-- **Admin Dashboard:** [https://admin-xi-six-78.vercel.app/](https://admin-xi-six-78.vercel.app/)
-- **Backend (API Server):** [https://server-phi-eight-42.vercel.app/](https://server-phi-eight-42.vercel.app/)
+- **Frontend (Patient Dashboard):** [https://bookmydocker-client.vercel.app/](https://bookmydocker-client.vercel.app/)
+- **Admin Dashboard:** [https://bookmydoctor-admin-sigma.vercel.app/](https://bookmydoctor-admin-sigma.vercel.app/)
+- **Backend (API Server):** [https://bookmydoctor-drab.vercel.app/](https://bookmydoctor-drab.vercel.app/)
 
 ---
 
