@@ -1,11 +1,10 @@
 import express from "express";
-import { addMessage, getChatHistory } from "../controllers/chatController.js";
 import authUser from "../middlewares/authUser.js";
+import { handleChatMessage, getChatHistory } from "../controllers/chatController.js";
 
-const chatRouter = express.Router();
+const router = express.Router();
 
-// Apply authUser middleware to ensure only authenticated users can get/post messages
-chatRouter.get("/history", authUser, getChatHistory);
-chatRouter.post("/message", authUser, addMessage);
+router.post("/message", authUser, handleChatMessage);
+router.get("/history", authUser, getChatHistory);
 
-export default chatRouter;
+export default router;

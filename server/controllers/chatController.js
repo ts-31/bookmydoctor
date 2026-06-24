@@ -1,108 +1,82 @@
+import { runAIGraph } from "../services/ai/graph.js";
 import chatModel from "../models/chatModel.js";
 
-// Helper to generate responsive mock responses on the backend
-const generateMockResponse = (userMessage) => {
-  const msg = userMessage.toLowerCase();
-  if (msg.includes("hi") || msg.includes("hello") || msg.includes("hey")) {
-    return "Hello! I am your AI assistant. How can I help you today?";
-  } else if (msg.includes("appointment") || msg.includes("book") || msg.includes("schedule")) {
-    return "I can help you book an appointment! Please navigate to the 'Doctors' page or check your existing bookings in 'My Appointments'.";
-  } else if (msg.includes("doctor") || msg.includes("specialty") || msg.includes("specialist")) {
-    return "We have doctors specialized in General Medicine, Pediatrics, Dermatology, Gynaecology, and more. You can view all our doctors on the 'Doctors' page.";
-  } else if (msg.includes("profile") || msg.includes("my account")) {
-    return "You can view and update your details on the 'My Profile' page.";
-  } else {
-    return `I received your message: "${userMessage}". I am currently in demo mode, but soon I'll be fully integrated to help you schedule appointments, find specialists, and manage your health records!`;
-  }
-};
-
-// API to add a new message to the user's chat history and generate a response
-const addMessage = async (req, res) => {
+/**
+ * Handle incoming chat messages and return the AI response.
+ * Uses chatModel to persist the history.
+ */
+export const handleChatMessage = async (req, res) => {
   try {
-    const { userId } = req.user; // Extracted from auth middleware
+    // extract userId from req.user (set by authUser middleware)
+    const userId = req.user?.userId || req.body?.userId;
     const { message } = req.body;
 
+    if (!message) {
+      return res.status(400).json({ success: false, message: "Message is required" });
+    }
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized: User ID is missing.",
-      });
+      return res.status(401).json({ success: false, message: "User not authenticated" });
     }
 
-    if (!message || typeof message !== 'string' || message.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid payload: Message content is required.",
-      });
+    // 1. Fetch or create chat document for user
+    let chat = await chatModel.findOne({ userId });
+    if (!chat) {
+      chat = new chatModel({ userId, messages: [] });
     }
 
-    const newMessage = {
-      role: "user",
-      content: message,
-      timestamp: new Date(),
-    };
+    // 2. Append new user message to DB document
+    const userMsgObj = { role: "user", content: message };
+    chat.messages.push(userMsgObj);
+    chat.lastActiveAt = Date.now();
 
-    const replyText = generateMockResponse(message);
-    const newReply = {
-      role: "assistant",
-      content: replyText,
-      timestamp: new Date(),
-    };
+    console.log(`\n[AI Chat] Received user message: "${message}"`);
+    console.log(`[AI Chat] Forwarding to LangGraph/Grok with ${chat.messages.length} total messages...`);
 
-    // Find the chat document for this user and push both the new user message and the AI reply.
-    // If it doesn't exist, upsert: true will create it.
-    const chat = await chatModel.findOneAndUpdate(
-      { userId },
-      {
-        $push: { messages: { $each: [newMessage, newReply] } },
-        $set: { lastActiveAt: Date.now() }
-      },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
+    // 3. Pass FULL message history to LangGraph
+    const aiResponseContent = await runAIGraph(chat.messages);
+
+    console.log(`[AI Chat] Received AI response.`);
+
+    // 4. Save AI response to DB
+    const aiMsgObj = { role: "assistant", content: aiResponseContent };
+    chat.messages.push(aiMsgObj);
+    await chat.save();
 
     res.status(200).json({
       success: true,
-      message: "Message stored and response generated successfully.",
-      chatId: chat._id,
-      reply: replyText,
+      reply: aiResponseContent,
     });
-
   } catch (error) {
-    console.error("Error in addMessage:", error);
+    console.error("Error in chat controller:", error);
     res.status(500).json({
       success: false,
-      message: "An internal server error occurred while storing the message.",
+      message: "An error occurred while processing your request.",
     });
   }
 };
 
-// API to get chat history for a user
-const getChatHistory = async (req, res) => {
+/**
+ * Fetch chat history from DB for the frontend.
+ */
+export const getChatHistory = async (req, res) => {
   try {
-    const { userId } = req.user; // Extracted from auth middleware
-
+    const userId = req.user?.userId || req.body?.userId;
+    
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized: User ID is missing.",
-      });
+      return res.status(401).json({ success: false, message: "User not authenticated" });
     }
 
     const chat = await chatModel.findOne({ userId });
 
     res.status(200).json({
       success: true,
-      messages: chat ? chat.messages : [],
+      messages: chat ? chat.messages : [], 
     });
-
   } catch (error) {
-    console.error("Error in getChatHistory:", error);
+    console.error("Error fetching chat history:", error);
     res.status(500).json({
       success: false,
-      message: "An internal server error occurred while retrieving chat history.",
+      message: "Failed to fetch chat history",
     });
   }
 };
-
-export { addMessage, getChatHistory };
-
