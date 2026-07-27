@@ -1,47 +1,59 @@
 import React from "react";
 import { User, Bot } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
-const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
-
-const linkify = (text) =>
-  text.split(URL_PATTERN).map((part, index) => {
-    if (!/^https?:\/\//.test(part)) return part;
-
-    const isDemoLink = part.includes("demo.gif");
+const markdownComponents = {
+  p: ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
+  ul: ({ children }) => (
+    <ul className="mb-1.5 last:mb-0 list-disc pl-4 space-y-0.5">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="mb-1.5 last:mb-0 list-decimal pl-4 space-y-0.5">{children}</ol>
+  ),
+  li: ({ children }) => <li className="leading-snug">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  a: ({ href, children }) => {
+    const isDemoLink = href?.includes("demo.gif");
     return (
       <a
-        key={index}
-        href={part}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
         className="underline break-all"
       >
-        {isDemoLink ? "demo" : part}
+        {isDemoLink ? "demo" : children}
       </a>
     );
-  });
+  },
+};
 
 const ChatMessage = ({ message }) => {
   const isUser = message.sender === "user";
 
   return (
-    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-4`}>
-      <div className={`flex max-w-[80%] ${isUser ? "flex-row-reverse" : "flex-row"} items-end gap-2`}>
+    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-3`}>
+      <div
+        className={`flex max-w-[85%] ${isUser ? "flex-row-reverse" : "flex-row"} items-end gap-2`}
+      >
         <div
-          className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${
-            isUser ? "bg-primary text-white" : "bg-gray-200 text-gray-600"
+          className={`flex-shrink-0 h-7 w-7 rounded-full flex items-center justify-center ${
+            isUser ? "bg-primary text-white" : "bg-emerald-100 text-primary"
           }`}
         >
-          {isUser ? <User size={16} /> : <Bot size={16} />}
+          {isUser ? <User size={14} /> : <Bot size={14} />}
         </div>
         <div
-          className={`px-4 py-2 rounded-2xl text-sm ${
+          className={`px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
             isUser
-              ? "bg-primary text-white rounded-br-none"
-              : "bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200"
+              ? "bg-primary text-white rounded-br-sm whitespace-pre-wrap"
+              : "bg-white text-gray-800 rounded-bl-sm shadow-sm"
           }`}
         >
-          {isUser ? message.text : linkify(message.text)}
+          {isUser ? (
+            message.text
+          ) : (
+            <ReactMarkdown components={markdownComponents}>{message.text}</ReactMarkdown>
+          )}
         </div>
       </div>
     </div>

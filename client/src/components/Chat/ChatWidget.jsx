@@ -12,7 +12,7 @@ const AI_UNAVAILABLE_REPLY = `I'm sorry, the AI assistant is temporarily unavail
 const INITIAL_MESSAGES = [
   {
     id: "init-1",
-    text: "Hello! I am your AI assistant. How can I help you today?",
+    text: "Hi! Need a doctor or an appointment?",
     sender: "ai",
   },
 ];

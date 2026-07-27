@@ -3,10 +3,9 @@ import { z } from "zod";
 import { getDoctorsList, getDoctorAvailability } from "../../doctorService.js";
 
 export const getDoctorsTool = tool(
-  async ({ speciality }) => {
+  async () => {
     try {
-      const doctors = await getDoctorsList({ speciality });
-      // We want to return a simplified version of doctors to the AI to save tokens
+      const doctors = await getDoctorsList();
       return JSON.stringify(
         doctors.map((doc) => ({
           id: doc._id,
@@ -15,7 +14,6 @@ export const getDoctorsTool = tool(
           experience: doc.experience,
           fees: doc.fees,
           available: doc.available,
-          about: doc.about,
         }))
       );
     } catch (error) {
@@ -24,10 +22,9 @@ export const getDoctorsTool = tool(
   },
   {
     name: "get_doctors",
-    description: "Search for doctors by speciality or list all doctors if no speciality is provided. Returns basic details like ID, name, speciality, and fees.",
-    schema: z.object({
-      speciality: z.string().optional().describe("The medical speciality to filter by (e.g., 'Dermatologist', 'Cardiologist')."),
-    }),
+    description:
+      "Get all doctors in the clinic. Returns id, name, speciality, experience, fees, and availability. Read each doctor's speciality to match what the user needs.",
+    schema: z.object({}),
   }
 );
 
