@@ -5,6 +5,10 @@
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "PORT"
 
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["multer", "bcrypt"]
+
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/api/:splat"
