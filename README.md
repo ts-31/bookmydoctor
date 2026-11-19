@@ -38,9 +38,9 @@ Patients interact with an AI appointment agent via a floating chat widget in the
 
 ## 🌐 Live Demo / Deployment
 
-- **Frontend (Patient Dashboard):** [https://bookmydocker-client.vercel.app/](https://bookmydocker-client.vercel.app/)
-- **Admin Dashboard:** [https://bookmydoctor-admin-sigma.vercel.app/](https://bookmydoctor-admin-sigma.vercel.app/)
-- **Backend (API Server):** [https://bookmydoctor-drab.vercel.app/](https://bookmydoctor-drab.vercel.app/)
+- **Frontend (Patient Dashboard):** [https://bookmydoctor-tlbf.netlify.app/](https://bookmydoctor-tlbf.netlify.app/)
+- **Admin Dashboard:** [https://bookmydoctor-prnv.netlify.app/](https://bookmydoctor-prnv.netlify.app/)
+- **Backend (API Server):** [https://bookmydoctor-ztcs.netlify.app/](https://bookmydoctor-ztcs.netlify.app/)
 
 ---
 
